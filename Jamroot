@@ -10,5 +10,5 @@ using gcc
 
 explicit test ;
 
-install dist : lazy.hpp : <location>/usr/include/reinvented-wheels ;
+install dist : lazy.hpp : <location>./usr/include/reinvented-wheels ;
 
