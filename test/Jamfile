@@ -1,0 +1,25 @@
+import testing ;
+
+lib boost_unit_test_framework
+    :
+    : <threading>single
+    ;
+
+lib boost_unit_test_framework
+    :
+    : <name>boost_unit_test_framework-mt <threading>multi
+    ;
+
+lib boost_test_exec_monitor
+    :
+    : <threading>single
+    ;
+
+lib boost_test_exec_monitor
+    :
+    : <name>boost_test_exec_monitor-mt <threading>multi
+    ;
+
+compile double-inclusion.cpp ;
+run main.cpp boost_unit_test_framework boost_test_exec_monitor ;
+

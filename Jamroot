@@ -1,0 +1,14 @@
+project
+    : requirements <include>.
+    ;
+
+using gcc
+    :
+    :
+    : <compileflags>-std=c++0x <compileflags>-Werror <compileflags>-pedantic
+    ;
+
+explicit test ;
+
+install dist : lazy-eval.hpp : <location>/usr/include/reinvented-wheels ;
+

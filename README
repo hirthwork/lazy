@@ -1,0 +1,45 @@
+Lazy evaluations library
+========================
+
+Introduction
+------------
+The purpose of this library is to provide easy way to use lazy evaluated
+variables. This library provide ability to use lazy evaluated variables as
+they were regular variables of any type.
+
+Please, note, that this library was intended to be C++0x compliant, not
+C++03 or C++98. And yeah, I haven't heard nothing about Microsoft Windows.
+
+Rationale
+---------
+This library provides ability to calculate value only if it is required in
+calculations. I.e. you declare variable, specify how it should be calculated
+and stop worry about excessive calculations if this value isn't required, e.g.
+when class member is not accessed.
+
+Overview
+--------
+The only thing you need to use lazy evaluating variables is to include
+`lazy.hpp` file. After that you can simply declare lazy variables like this:
+
+    TLazy<int> five([](){ return 2 + 3; });
+    TLazy<double> root([](){ return sqrt(3); });
+    TLazy<double> sum([&five, &root](){ return five + root; });
+    std::cout << sum << std::endl;  // no calculations performed until
+                                    // execution reach this line
+
+Value for variable is being calculated when you refers to it first time, but
+no calculations performed if you just copy the whole lazy variable. This let
+you declare lazy variables as class members and copy class object without
+calculating values you're not using.
+
+Installation
+------------
+You require bjam (a.k.a. boost build) to install this package and (optionally)
+launch sanity test.
+
+  * In order to install, execute bjam without arguments as superuser. All
+    required headers will be installed to /usr/include/reinvented-wheels.
+  * In order to launch the test, execute bjam with `-d0 test` argument and
+    ensure that return code was 0.
+

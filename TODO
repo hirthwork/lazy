@@ -1,0 +1,30 @@
+List of features to implement and bugs to fix
+=============================================
+
+Legend:
+-------
+  (*) Features that obviously should be implemented.
+
+  (?) Features that probably isn't required.
+
+  (+) Already implemented features.
+
+  (-) Features, that won't be implemented for some reason.
+
+To do list grouping must be same as listed above.
+
+To do list:
+-----------
+  (*) Implement thread-safety policies.
+
+  (*) Implement separate storage for move assignable trivial default
+    constructable objects and for non-trivial constructable ones.
+
+  (*) Implement copy-on-write policy, which will allow to get rid of
+    "mutable" and let copied lazy values to be calculated only once.
+
+  (?) Implement policy for non-steady calculators, which will recalculate
+    Value_ on each assignment or copy.
+
+  (?) Implement "void" values support.
+
