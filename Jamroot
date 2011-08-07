@@ -1,3 +1,5 @@
+import package ;
+
 project
     : requirements <include>.
     ;
@@ -10,5 +12,5 @@ using gcc
 
 explicit test ;
 
-install dist : lazy.hpp : <location>./usr/include/reinvented-wheels ;
+package.install dist : <install-header-subdir>reinvented-wheels : : : lazy.hpp ;
 
