@@ -8,7 +8,7 @@ variables. This library provide ability to use lazy evaluated variables as
 they were regular variables of any type.
 
 Please, note, that this library was intended to be C++0x compliant, not
-C++03 or C++98. And yeah, I haven't heard nothing about Microsoft Windows.
+C++03 or C++98.
 
 Rationale
 ---------
