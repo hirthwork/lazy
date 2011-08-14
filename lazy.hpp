@@ -46,14 +46,14 @@ namespace NReinventedWheels
         }
 
         inline TLazy(const TLazy& lazy)
-            : Value_(lazy.Value_.get() ? new TValue(*lazy.Value_) : nullptr)
-            , Calculator_(Value_.get() ? nullptr : lazy.Calculator_)
+            : Value_(lazy.Value_.get() ? new TValue(*lazy.Value_) : 0)
+            , Calculator_(Value_.get() ? 0 : lazy.Calculator_)
         {
         }
 
         inline TLazy(TLazy&& lazy)
             : Value_(lazy.Value_.release())
-            , Calculator_(Value_.get() ? nullptr : lazy.Calculator_)
+            , Calculator_(Value_.get() ? 0 : lazy.Calculator_)
         {
         }
 

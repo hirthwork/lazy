@@ -8,7 +8,7 @@ using gcc
     :
     :
     : <compileflags>-std=c++0x <compileflags>-Wall <compileflags>-Wextra
-      <compileflags>-Werror <compileflags>-pedantic
+      <compileflags>-Werror <compileflags>-pedantic-errors
     ;
 
 explicit test ;
