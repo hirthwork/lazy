@@ -1,5 +1,5 @@
 /*
- * lazy.hpp    -- lazy evaluations variables wrapper
+ * main.cpp    -- lazy evaluating variables tests
  *
  * Copyright (C) 2011 Dmitry Potapov <potapov.d@gmail.com>
  *
@@ -77,20 +77,20 @@ BOOST_AUTO_TEST_CASE(value_access)
 
 class TCounter
 {
-    int& Flag;
+    int& Flag_;
     TCounter(const TCounter&) = delete;
 
 public:
     inline TCounter(int& flag)
-        : Flag(flag)
+        : Flag_(flag)
     {
-        ++Flag;
+        ++Flag_;
     }
 
     inline TCounter(TCounter&& counter)
-        : Flag(counter.Flag)
+        : Flag_(counter.Flag_)
     {
-        ++Flag;
+        ++Flag_;
     }
 };
 
@@ -129,9 +129,9 @@ BOOST_AUTO_TEST_CASE(constuctors)
 BOOST_AUTO_TEST_CASE(assignments)
 {
     bool firstFlag = false;
-    TLazy<int> one([&firstFlag](){ return (firstFlag = true, 1); });
-    one = 5.5;
-    BOOST_REQUIRE_EQUAL(one, 5);
+    TLazy<int> first([&firstFlag](){ return (firstFlag = true, 1); });
+    first = 5.5;
+    BOOST_REQUIRE_EQUAL(first, 5);
     BOOST_REQUIRE_EQUAL(firstFlag, false);
 
     int secondFlag = 0, thirdFlag = 0;
@@ -151,5 +151,37 @@ BOOST_AUTO_TEST_CASE(assignments)
     (void)(TCounter&)forth;
     BOOST_REQUIRE_EQUAL(forthFlag, 1);
     BOOST_REQUIRE_EQUAL(dummyFlag, 0);
+}
+
+struct TPod
+{
+    int A_;
+    double B_;
+    char C_[16];
+};
+
+struct TCopyable
+{
+    TCopyable& operator = (const TCopyable&);
+};
+
+BOOST_AUTO_TEST_CASE(storage)
+{
+    TLazy<int> first([](){ return 1; });
+    BOOST_REQUIRE_LE(&first, (void*)&(int&)first);
+    BOOST_REQUIRE_GT(&first + 1, (void*)&(int&)first);
+
+    TLazy<TPod> second([](){ return TPod(); });
+    BOOST_REQUIRE_LE(&second, (void*)&(int&)second);
+    BOOST_REQUIRE_GT(&second + 1, (void*)&(int&)second);
+
+    TLazy<TCopyable> third([](){ return TCopyable(); });
+    BOOST_REQUIRE_LE(&third, (void*)&(int&)third);
+    BOOST_REQUIRE_GT(&third + 1, (void*)&(int&)third);
+
+    int flag = 0;
+    TLazy<TCounter> forth([&flag](){ return TCounter(flag); });
+    BOOST_REQUIRE((void*)&(TCounter&)forth < &forth
+        || (void*)&(TCounter&)forth > &forth + 1);
 }
 

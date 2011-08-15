@@ -1,5 +1,5 @@
 /*
- * lazy.hpp    -- lazy evaluations variables wrapper
+ * lazy.hpp    -- lazy evaluating variables wrapper
  *
  * Copyright (C) 2011 Dmitry Potapov <potapov.d@gmail.com>
  *
@@ -21,21 +21,26 @@
 #define __LAZY_HPP_2011_08_07__
 
 #include <functional>
-#include <memory>
+#include <type_traits>
+#include "storage.hpp"
 
 namespace NReinventedWheels
 {
     template <class TValue>
     class TLazy
     {
-        mutable std::unique_ptr<TValue> Value_;
+        mutable NPrivate::TStorage<TValue,
+            std::is_copy_assignable<TValue>::value
+            && std::has_trivial_default_constructor<TValue>::value> Value_;
+        // Uncomment this line, when this trait will be implemented by gcc
+        //    && std::is_trivially_default_constructible<TValue>::value> Value_;
         std::function<TValue(void)> Calculator_;
 
         inline void Calculate() const
         {
-            if (!Value_.get())
+            if (!Value_.IsInitialized())
             {
-                Value_.reset(new TValue(Calculator_()));
+                Value_ = Calculator_;
             }
         }
 
@@ -46,32 +51,32 @@ namespace NReinventedWheels
         }
 
         inline TLazy(const TLazy& lazy)
-            : Value_(lazy.Value_.get() ? new TValue(*lazy.Value_) : 0)
-            , Calculator_(Value_.get() ? 0 : lazy.Calculator_)
+            : Value_(lazy.Value_)
+            , Calculator_(Value_.IsInitialized() ? nullptr : lazy.Calculator_)
         {
         }
 
         inline TLazy(TLazy&& lazy)
-            : Value_(lazy.Value_.release())
-            , Calculator_(Value_.get() ? 0 : lazy.Calculator_)
+            : Value_(lazy.Value_.Release())
+            , Calculator_(Value_.IsInitialized() ? nullptr : lazy.Calculator_)
         {
         }
 
         inline operator TValue&()
         {
             Calculate();
-            return *Value_;
+            return Value_;
         }
 
         inline operator const TValue&() const
         {
             Calculate();
-            return *Value_;
+            return Value_;
         }
 
         inline TLazy& operator = (const TValue& value)
         {
-            Value_.reset(new TValue(value));
+            Value_ = value;
             return *this;
         }
 
@@ -79,13 +84,13 @@ namespace NReinventedWheels
         {
             if (this != &lazy)
             {
-                if (lazy.Value_.get())
+                if (lazy.Value_.IsInitialized())
                 {
-                    Value_.reset(new TValue(*lazy.Value_));
+                    Value_ = (const TValue&)lazy.Value_;
                 }
                 else
                 {
-                    Value_.reset();
+                    Value_.Reset();
                     Calculator_ = lazy.Calculator_;
                 }
             }
@@ -94,8 +99,8 @@ namespace NReinventedWheels
 
         inline TLazy& operator = (TLazy&& lazy)
         {
-            Value_.reset(lazy.Value_.release());
-            if (!Value_.get())
+            Value_ = lazy.Value_.Release();
+            if (!Value_.IsInitialized())
             {
                 Calculator_ = lazy.Calculator_;
             }
