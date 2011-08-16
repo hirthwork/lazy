@@ -87,7 +87,7 @@ namespace NReinventedWheels
             {
                 if (lazy.Value_.IsInitialized())
                 {
-                    Value_ = (const TValue&)lazy.Value_;
+                    Value_ = static_cast<const TValue&>(lazy.Value_);
                 }
                 else
                 {

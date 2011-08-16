@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(single_object)
     bool castFlag = false;
     TLazy<int> cast([&castFlag](){ return (castFlag = true, 1); });
     BOOST_REQUIRE_EQUAL(castFlag, false);
-    (void)(int)cast;
+    static_cast<void>(static_cast<int>(cast));
     BOOST_REQUIRE_EQUAL(castFlag, true);
 }
 
@@ -69,6 +69,9 @@ BOOST_AUTO_TEST_CASE(value_access)
     TLazy<int> one([&flag](){ return (++flag, 1); });
     int& i = one;
     BOOST_REQUIRE_EQUAL(i, 1);
+    BOOST_REQUIRE_EQUAL(flag, 1);
+    i = 2;
+    BOOST_REQUIRE_EQUAL(one, 2);
     BOOST_REQUIRE_EQUAL(flag, 1);
 
     const TLazy<double> pi([](){ return 3.14f; });
@@ -102,7 +105,7 @@ TLazy<TCounter> CreateCounter(int& flag)
 TLazy<TCounter> CreateUsedCounter(int& flag)
 {
     TLazy<TCounter> counter(CreateCounter(flag));
-    (void)(TCounter&)counter;
+    static_cast<void>(static_cast<TCounter&>(counter));
     return counter;
 }
 
@@ -118,7 +121,7 @@ BOOST_AUTO_TEST_CASE(constuctors)
     int secondFlag = 0;
     TLazy<TCounter> first(CreateCounter(secondFlag));
     BOOST_REQUIRE_EQUAL(secondFlag, 0);
-    (void)(TCounter&)first;
+    static_cast<void>(static_cast<TCounter&>(first));
     BOOST_REQUIRE_EQUAL(secondFlag, 1);
 
     int thirdFlag = 0;
@@ -148,7 +151,7 @@ BOOST_AUTO_TEST_CASE(assignments)
     int dummyFlag = 0;
     TLazy<TCounter> forth([&dummyFlag](){ return TCounter(dummyFlag); });
     forth = CreateUsedCounter(forthFlag);
-    (void)(TCounter&)forth;
+    static_cast<void>(static_cast<TCounter&>(forth));
     BOOST_REQUIRE_EQUAL(forthFlag, 1);
     BOOST_REQUIRE_EQUAL(dummyFlag, 0);
 }
@@ -162,26 +165,34 @@ struct TPod
 
 struct TCopyable
 {
-    TCopyable& operator = (const TCopyable&);
+    TCopyable& operator = (const TCopyable&)
+    {
+        return *this;
+    }
 };
 
 BOOST_AUTO_TEST_CASE(storage)
 {
     TLazy<int> first([](){ return 1; });
-    BOOST_REQUIRE_LE(&first, (void*)&(int&)first);
-    BOOST_REQUIRE_GT(&first + 1, (void*)&(int&)first);
+    BOOST_REQUIRE_LE(&first, static_cast<void*>(&static_cast<int&>(first)));
+    BOOST_REQUIRE_GT(&first + 1,
+        static_cast<void*>(&static_cast<int&>(first)));
 
     TLazy<TPod> second([](){ return TPod(); });
-    BOOST_REQUIRE_LE(&second, (void*)&(int&)second);
-    BOOST_REQUIRE_GT(&second + 1, (void*)&(int&)second);
+    BOOST_REQUIRE_LE(&second,
+        static_cast<void*>(&static_cast<TPod&>(second)));
+    BOOST_REQUIRE_GT(&second + 1,
+        static_cast<void*>(&static_cast<TPod&>(second)));
 
     TLazy<TCopyable> third([](){ return TCopyable(); });
-    BOOST_REQUIRE_LE(&third, (void*)&(int&)third);
-    BOOST_REQUIRE_GT(&third + 1, (void*)&(int&)third);
+    BOOST_REQUIRE_LE(&third,
+        static_cast<void*>(&static_cast<TCopyable&>(third)));
+    BOOST_REQUIRE_GT(&third + 1,
+        static_cast<void*>(&static_cast<TCopyable&>(third)));
 
     int flag = 0;
     TLazy<TCounter> forth([&flag](){ return TCounter(flag); });
-    BOOST_REQUIRE((void*)&(TCounter&)forth < &forth
-        || (void*)&(TCounter&)forth > &forth + 1);
+    BOOST_REQUIRE(static_cast<void*>(&static_cast<TCounter&>(forth)) < &forth
+        || static_cast<void*>(&static_cast<TCounter&>(forth)) > &forth + 1);
 }
 
