@@ -13,5 +13,10 @@ using gcc
 
 explicit test ;
 
-package.install dist : <install-header-subdir>reinvented-wheels : : : lazy.hpp ;
+package.install dist
+    : <install-header-subdir>reinvented-wheels
+    :
+    :
+    : lazy.hpp storage.hpp
+    ;
 

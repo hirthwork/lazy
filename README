@@ -35,11 +35,13 @@ calculating values you're not using.
 
 Installation
 ------------
-You require bjam (a.k.a. boost build) to install this package and (optionally)
-launch sanity test.
+You require bjam (a.k.a. boost build) to install this package.
+In order to launch sanity test you need Boost.Test to be installed.
 
-  * In order to install, execute bjam without arguments as superuser. All
-    required headers will be installed to /usr/include/reinvented-wheels.
+  * In order to install, execute bjam with argument
+    `dist --includedir=<prefix>`, where `<prefix>` is the installation path
+    where library will be installed. More precisely, `reinvented-wheels`
+    subfolder will be created, containing all required headers.
   * In order to launch the test, execute bjam with `-d0 test` argument and
     ensure that return code was 0.
 
