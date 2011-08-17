@@ -1,5 +1,5 @@
 /*
- * lazy.hpp    -- lazy evaluations variables wrapper
+ * double-inclusion.hpp     -- lazy evaluating header basic test
  *
  * Copyright (C) 2011 Dmitry Potapov <potapov.d@gmail.com>
  *

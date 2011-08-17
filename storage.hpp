@@ -1,5 +1,5 @@
 /*
- * storage.hpp      -- lazy evaluating values storage
+ * storage.hpp              -- lazy evaluating values storage
  *
  * Copyright (C) 2011 Dmitry Potapov <potapov.d@gmail.com>
  *

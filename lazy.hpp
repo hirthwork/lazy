@@ -1,5 +1,5 @@
 /*
- * lazy.hpp         -- lazy evaluating variables wrapper
+ * lazy.hpp                 -- lazy evaluating variables wrapper
  *
  * Copyright (C) 2011 Dmitry Potapov <potapov.d@gmail.com>
  *

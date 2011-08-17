@@ -1,5 +1,5 @@
 /*
- * main.cpp    -- lazy evaluating variables tests
+ * main.cpp                 -- lazy evaluating variables tests
  *
  * Copyright (C) 2011 Dmitry Potapov <potapov.d@gmail.com>
  *
@@ -20,7 +20,7 @@
 #include <lazy.hpp>
 using NReinventedWheels::TLazy;
 
-#define BOOST_TEST_MODULE LazyEvaluationTest
+#define BOOST_TEST_MODULE LazyTest
 #include <boost/test/unit_test.hpp>
 
 BOOST_AUTO_TEST_CASE(single_object)
