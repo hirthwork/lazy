@@ -69,13 +69,14 @@ namespace NReinventedWheels
             return Value_;
         }
 
-        inline operator const TValue&() const
+        inline operator typename TCheapCopy<TValue>::TValueType() const
         {
             Calculate();
             return Value_;
         }
 
-        inline TLazy& operator = (const TValue& value)
+        inline TLazy& operator = (
+            typename TCheapCopy<TValue>::TValueType value)
         {
             Value_ = value;
             return *this;
@@ -87,7 +88,8 @@ namespace NReinventedWheels
             {
                 if (lazy.Value_.IsInitialized())
                 {
-                    Value_ = static_cast<const TValue&>(lazy.Value_);
+                    Value_ = static_cast<
+                        typename TCheapCopy<TValue>::TValueType>(lazy.Value_);
                 }
                 else
                 {

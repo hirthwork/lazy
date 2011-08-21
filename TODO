@@ -15,9 +15,6 @@ To do list grouping must be same as listed above.
 
 To do list:
 -----------
-  (*) Replace all references passed to functions with type trait to have small
-    POD types copied, not referenced.
-
   (*) Implement thread-safety policies.
 
   (*) Implement copy-on-write policy, which will allow to get rid of
@@ -27,6 +24,9 @@ To do list:
     Value_ on each assignment or copy.
 
   (?) Implement "void" values support.
+
+  (+) Replace all references passed to functions with type trait to have small
+    POD types copied, not referenced.
 
   (+) Implement separate storage for move assignable trivial default
     constructable objects and for non-trivial constructable ones.

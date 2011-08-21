@@ -23,6 +23,8 @@
 #include <functional>
 #include <memory>
 
+#include <reinvented-wheels/cheapcopy.hpp>
+
 namespace NReinventedWheels
 {
     namespace NPrivate
@@ -65,12 +67,13 @@ namespace NReinventedWheels
                 return Value_;
             }
 
-            inline operator const TValue&() const
+            inline operator typename TCheapCopy<TValue>::TValueType() const
             {
                 return Value_;
             }
 
-            inline TStorage& operator = (const TValue& value)
+            inline TStorage& operator = (
+                typename TCheapCopy<TValue>::TValueType value)
             {
                 Initialized_ = true;
                 Value_ = value;
@@ -140,12 +143,13 @@ namespace NReinventedWheels
                 return *Value_;
             }
 
-            inline operator const TValue&() const
+            inline operator typename TCheapCopy<TValue>::TValueType() const
             {
                 return *Value_;
             }
 
-            inline TStorage& operator = (const TValue& value)
+            inline TStorage& operator = (
+                typename TCheapCopy<TValue>::TValueType value)
             {
                 Value_.reset(new TValue(value));
                 return *this;
