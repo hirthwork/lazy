@@ -23,6 +23,8 @@
 #include <functional>
 #include <type_traits>
 
+#include <reinvented-wheels/cheapcopy.hpp>
+
 #include "storage.hpp"
 
 namespace NReinventedWheels
