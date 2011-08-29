@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <utility>
+
 #include <lazy.hpp>
 using NReinventedWheels::TLazy;
 
@@ -93,7 +95,7 @@ public:
     inline TCounter(TCounter&& counter)
         : Flag_(counter.Flag_)
     {
-        ++Flag_;
+        Flag_ += 4;
     }
 };
 
@@ -108,6 +110,13 @@ TLazy<TCounter> CreateUsedCounter(int& flag)
     static_cast<void>(static_cast<TCounter&>(counter));
     return counter;
 }
+
+struct TIntConstructible
+{
+    inline TIntConstructible(int)
+    {
+    }
+};
 
 BOOST_AUTO_TEST_CASE(constuctors)
 {
@@ -127,6 +136,16 @@ BOOST_AUTO_TEST_CASE(constuctors)
     int thirdFlag = 0;
     TLazy<TCounter> second(CreateUsedCounter(thirdFlag));
     BOOST_REQUIRE_EQUAL(thirdFlag, 1);
+    TCounter counter1(std::forward<TCounter>(second));
+    BOOST_REQUIRE_EQUAL(thirdFlag, 5);
+
+    TLazy<TIntConstructible> third([](){ return int(); });
+
+    int forthFlag = 0;
+    TLazy<TCounter> forth([&forthFlag]()->int&{ return forthFlag;});
+    BOOST_REQUIRE_EQUAL(forthFlag, 0);
+    TCounter counter2(std::forward<TCounter>(forth));
+    BOOST_REQUIRE_EQUAL(forthFlag, 5);
 }
 
 BOOST_AUTO_TEST_CASE(assignments)
