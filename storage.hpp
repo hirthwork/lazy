@@ -22,6 +22,7 @@
 
 #include <functional>
 #include <memory>
+#include <utility>
 
 #include <reinvented-wheels/cheapcopy.hpp>
 
@@ -47,14 +48,16 @@ namespace NReinventedWheels
             {
             }
 
+            inline TStorage(TStorage&& storage)
+                : Initialized_(storage.Initialized_)
+                , Value_(Initialized_ ? std::move(storage.Value_) : TValue())
+            {
+                storage.Initialized_ = false;
+            }
+
             inline bool IsInitialized() const
             {
                 return Initialized_;
-            }
-
-            inline TStorage Release()
-            {
-                return *this;
             }
 
             inline void Reset()
@@ -84,8 +87,9 @@ namespace NReinventedWheels
             {
                 if ((Initialized_ = storage.Initialized_))
                 {
-                    Value_ = storage.Value_;
+                    Value_ = std::move(storage.Value_);
                 }
+                storage.Initialized_ = false;
                 return *this;
             }
 
@@ -119,18 +123,13 @@ namespace NReinventedWheels
             }
 
             inline TStorage(TStorage&& storage)
-                : Value_(storage.Value_.release())
+                : Value_(std::move(storage.Value_))
             {
             }
 
             inline bool IsInitialized() const
             {
                 return Value_.get();
-            }
-
-            inline TStorage Release()
-            {
-                return TStorage(Value_.release());
             }
 
             inline void Reset()
@@ -157,7 +156,7 @@ namespace NReinventedWheels
 
             inline TStorage& operator = (TStorage&& storage)
             {
-                Value_.reset(storage.Value_.release());
+                Value_ = std::move(storage.Value_);
                 return *this;
             }
 

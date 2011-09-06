@@ -22,6 +22,7 @@
 
 #include <functional>
 #include <type_traits>
+#include <utility>
 
 #include <reinvented-wheels/cheapcopy.hpp>
 
@@ -37,7 +38,8 @@ namespace NReinventedWheels
             && std::has_trivial_default_constructor<TValue>::value> Value_;
         // Uncomment this line, when this trait will be implemented by gcc
         //    && std::is_trivially_default_constructible<TValue>::value> Value_;
-        std::function<TValue(void)> Calculator_;
+        typedef std::function<TValue(void)> TCalculator;
+        TCalculator Calculator_;
 
         inline void Calculate() const
         {
@@ -48,8 +50,13 @@ namespace NReinventedWheels
         }
 
     public:
-        inline TLazy(const std::function<TValue(void)>& calculator)
+        inline TLazy(const TCalculator& calculator)
             : Calculator_(calculator)
+        {
+        }
+
+        inline TLazy(TCalculator&& calculator)
+            : Calculator_(std::move(calculator))
         {
         }
 
@@ -60,8 +67,9 @@ namespace NReinventedWheels
         }
 
         inline TLazy(TLazy&& lazy)
-            : Value_(lazy.Value_.Release())
-            , Calculator_(Value_.IsInitialized() ? nullptr : lazy.Calculator_)
+            : Value_(std::move(lazy.Value_))
+            , Calculator_(Value_.IsInitialized() ?
+                nullptr : std::move(lazy.Calculator_))
         {
         }
 
@@ -104,14 +112,55 @@ namespace NReinventedWheels
 
         inline TLazy& operator = (TLazy&& lazy)
         {
-            Value_ = lazy.Value_.Release();
-            if (!Value_.IsInitialized())
+            if (lazy.Value_.IsInitialized())
             {
-                Calculator_ = lazy.Calculator_;
+                Value_ = std::move(lazy.Value_);
+            }
+            else
+            {
+                Value_.Reset();
+                Calculator_ = std::move(lazy.Calculator_);
             }
             return *this;
         }
+
+        inline void Swap(TLazy& lazy)
+        {
+            if (Value_.IsInitialized())
+            {
+                if (lazy.Value_.IsInitialized())
+                {
+                    std::swap(Value_, lazy.Value_);
+                }
+                else
+                {
+                    lazy.Value_ = std::move(Value_);
+                    Calculator_ = std::move(lazy.Calculator_);
+                }
+            }
+            else
+            {
+                if (lazy.Value_.IsInitialized())
+                {
+                    Value_ = std::move(lazy.Value_);
+                    lazy.Calculator_ = std::move(Calculator_);
+                }
+                else
+                {
+                    std::swap(Calculator_, lazy.Calculator_);
+                }
+            }
+        }
     };
+}
+
+namespace std {
+    template <class TValue>
+    void swap(NReinventedWheels::TLazy<TValue>& lhs,
+        NReinventedWheels::TLazy<TValue>& rhs)
+    {
+        lhs.Swap(rhs);
+    }
 }
 
 #endif
