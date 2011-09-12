@@ -21,56 +21,209 @@
 #define __LAZY_HPP_2011_08_07__
 
 #include <functional>
+#include <new>
 #include <type_traits>
 #include <utility>
-
-#include <reinvented-wheels/cheapcopy.hpp>
-
-#include "storage.hpp"
 
 namespace NReinventedWheels
 {
     template <class TValue>
-    class TLazy
+    struct TLazyBase
     {
-        mutable NPrivate::TStorage<TValue,
-            std::is_copy_assignable<TValue>::value
-            && std::has_trivial_default_constructor<TValue>::value> Value_;
-        // Uncomment this line, when this trait will be implemented by gcc
-        //    && std::is_trivially_default_constructible<TValue>::value> Value_;
-        typedef std::function<TValue(void)> TCalculator;
-        TCalculator Calculator_;
-
-        inline void Calculate() const
-        {
-            if (!Value_.IsInitialized())
+        // use alignas(TValue) instead of union once it will be implemented in
+        // compiler
+        union TStorage {
+            constexpr TStorage()
             {
-                Value_ = Calculator_;
+            }
+
+            inline ~TStorage()
+            {
+            }
+
+            TValue Data_;
+        } Storage_;
+        TValue& Value_;
+        mutable bool Initialized_;
+
+        inline TLazyBase()
+            : Value_(Storage_.Data_)
+            , Initialized_(false)
+        {
+        }
+
+        inline ~TLazyBase()
+        {
+            if (Initialized_) {
+                Value_.~TValue();
             }
         }
 
+        inline void Destroy()
+        {
+            Value_.~TValue();
+            Initialized_ = false;
+        }
+    };
+
+    template <class TValue>
+    class TLazy : TLazyBase<TValue>
+    {
+        constexpr void ValidateCopyTraits()
+        {
+            static_assert(std::is_copy_constructible<TValue>::value ||
+                (std::is_default_constructible<TValue>::value &&
+                    std::is_copy_assignable<TValue>::value),
+                "Stored type should be either copy constructible or "
+                "default constructible and copy assignable");
+        }
+        typedef TLazyBase<TValue> TBase;
+        using TBase::Value_;
+        using TBase::Initialized_;
+        typedef std::function<TValue(void)> TCalculator;
+        TCalculator Calculator_;
+
+        inline void Calculate(std::true_type) const
+        {
+            // TODO: check that move c'tor called here if present
+            new(&Value_) TValue(Calculator_());
+        }
+
+        inline void Calculate(std::false_type) const
+        {
+            new(&Value_) TValue;
+            Value_ = this->Calculator();
+        }
+
+        inline void Calculate() const
+        {
+            if (!Initialized_)
+            {
+                Calculate(std::__or_<std::is_copy_constructible<TValue>,
+                    std::is_move_constructible<TValue>>());
+                Initialized_ = true;
+            }
+        }
+
+        inline void MoveNewValue(std::true_type, TValue&& value)
+        {
+            new(&Value_) TValue;
+            Value_ = std::move(value);
+        }
+
+        inline void MoveNewValue(std::false_type, TValue&& value)
+        {
+            ConstructValue(value);
+        }
+
+        inline void MoveNewValue(TValue&& value)
+        {
+            MoveNewValue(std::is_move_assignable<TValue>(), std::move(value));
+        }
+
+        inline void ConstructValue(std::true_type, const TValue& value)
+        {
+            new(&Value_) TValue(value);
+        }
+
+        inline void ConstructValue(std::false_type, const TValue& value)
+        {
+            new(&Value_) TValue;
+            Value_ = value;
+        }
+
+        inline void ConstructValue(const TValue& value)
+        {
+            ConstructValue(std::is_copy_constructible<TValue>(), value);
+        }
+
+        inline void ConstructValue(std::true_type, TValue&& value)
+        {
+            new(&Value_) TValue(std::move(value));
+        }
+
+        inline void ConstructValue(std::false_type, TValue&& value)
+        {
+            MoveNewValue(std::move(value));
+        }
+
+        inline void ConstructValue(TValue&& value)
+        {
+            ConstructValue(std::is_move_constructible<TValue>(),
+                std::move(value));
+        }
+
+        inline void CopyValue(std::true_type, const TValue& value)
+        {
+            Value_ = value;
+        }
+
+        inline void CopyValue(std::false_type, const TValue& value)
+        {
+            // TODO: provide strong guarantees here
+            Value_.~TValue();
+            new(&Value_) TValue(value);
+        }
+
+        inline void CopyValue(const TValue& value)
+        {
+            CopyValue(std::is_copy_assignable<TValue>(), value);
+        }
+
+        inline void MoveValue(std::true_type, TValue&& value)
+        {
+            // TODO: provide strong guarantees here
+            Value_.~TValue();
+            ConstructValue(std::move(value));
+        }
+
+        inline void MoveValue(std::false_type, TValue&& value)
+        {
+            CopyValue(value);
+        }
+
+        inline void MoveValue(TValue&& value)
+        {
+            MoveValue(std::__or_<std::is_move_constructible<TValue>,
+                std::is_move_assignable<TValue>>(), std::move(value));
+        }
+
     public:
-        inline TLazy(const TCalculator& calculator)
+        inline explicit TLazy(const TCalculator& calculator)
             : Calculator_(calculator)
         {
         }
 
-        inline TLazy(TCalculator&& calculator)
+        inline explicit TLazy(TCalculator&& calculator)
             : Calculator_(std::move(calculator))
         {
         }
 
         inline TLazy(const TLazy& lazy)
-            : Value_(lazy.Value_)
-            , Calculator_(Value_.IsInitialized() ? nullptr : lazy.Calculator_)
         {
+            ValidateCopyTraits();
+            if (lazy.Initialized_)
+            {
+                ConstructValue(lazy.Value_);
+                Initialized_ = true;
+            }
+            else
+            {
+                Calculator_ = lazy.Calculator_;
+            }
         }
 
         inline TLazy(TLazy&& lazy)
-            : Value_(std::move(lazy.Value_))
-            , Calculator_(Value_.IsInitialized() ?
-                nullptr : std::move(lazy.Calculator_))
         {
+            if (lazy.Initialized_)
+            {
+                ConstructValue(std::move(lazy.Value_));
+                Initialized_ = true;
+            }
+            else
+            {
+                Calculator_ = std::move(lazy.Calculator_);
+            }
         }
 
         inline operator TValue&()
@@ -79,32 +232,51 @@ namespace NReinventedWheels
             return Value_;
         }
 
-        inline operator typename TCheapCopy<TValue>::TValueType() const
+        inline operator const TValue&() const
         {
             Calculate();
             return Value_;
         }
 
-        inline TLazy& operator = (
-            typename TCheapCopy<TValue>::TValueType value)
+        inline TLazy& operator = (const TValue& value)
         {
-            Value_ = value;
+            ValidateCopyTraits();
+            if (Initialized_)
+            {
+                CopyValue(value);
+            }
+            else
+            {
+                ConstructValue(value);
+                Initialized_ = true;
+            }
             return *this;
         }
 
         inline TLazy& operator = (const TLazy& lazy)
         {
+            ValidateCopyTraits();
             if (this != &lazy)
             {
-                if (lazy.Value_.IsInitialized())
+                if (lazy.Initialized_)
                 {
-                    Value_ = static_cast<
-                        typename TCheapCopy<TValue>::TValueType>(lazy.Value_);
+                    if (Initialized_)
+                    {
+                        CopyValue(lazy.Value_);
+                    }
+                    else
+                    {
+                        ConstructValue(lazy.Value_);
+                        Initialized_ = true;
+                    }
                 }
                 else
                 {
-                    Value_.Reset();
                     Calculator_ = lazy.Calculator_;
+                    if (Initialized_)
+                    {
+                        this->Destroy();
+                    }
                 }
             }
             return *this;
@@ -112,13 +284,20 @@ namespace NReinventedWheels
 
         inline TLazy& operator = (TLazy&& lazy)
         {
-            if (lazy.Value_.IsInitialized())
+            if (lazy.Initialized_)
             {
-                Value_ = std::move(lazy.Value_);
+                if (Initialized_) {
+                    MoveValue(std::move(lazy.Value_));
+                } else {
+                    ConstructValue(std::move(lazy.Value_));
+                    Initialized_ = true;
+                }
             }
             else
             {
-                Value_.Reset();
+                if (Initialized_) {
+                    this->Destroy();
+                }
                 Calculator_ = std::move(lazy.Calculator_);
             }
             return *this;
@@ -126,24 +305,26 @@ namespace NReinventedWheels
 
         inline void Swap(TLazy& lazy)
         {
-            if (Value_.IsInitialized())
+            if (Initialized_)
             {
-                if (lazy.Value_.IsInitialized())
+                if (lazy.Inititalized_)
                 {
                     std::swap(Value_, lazy.Value_);
                 }
                 else
                 {
-                    lazy.Value_ = std::move(Value_);
+                    lazy.MoveNewValue(std::move(Value_));
                     Calculator_ = std::move(lazy.Calculator_);
+                    this->Destroy();
                 }
             }
             else
             {
-                if (lazy.Value_.IsInitialized())
+                if (lazy.Initialized_)
                 {
-                    Value_ = std::move(lazy.Value_);
+                    MoveNewValue(std::move(lazy.Value_));
                     lazy.Calculator_ = std::move(Calculator_);
+                    lazy.Destroy();
                 }
                 else
                 {

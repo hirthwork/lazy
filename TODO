@@ -15,6 +15,12 @@ To do list grouping must be same as listed above.
 
 To do list:
 -----------
+  (*) Allow heterogeneous assignments and copying.
+
+  (*) Add noexcept to functions.
+
+  (*) Cover reference returning functions with tests.
+
   (*) Implement thread-safety policies.
 
   (*) Implement copy-on-write policy, which will allow to get rid of
@@ -30,4 +36,9 @@ To do list:
 
   (+) Implement separate storage for move assignable trivial default
     constructable objects and for non-trivial constructable ones.
+
+  (+) Add static check with minimal value type requirements.
+
+  (+) Assign value types basing on move and copy c'tor and assignment
+    presence.
 

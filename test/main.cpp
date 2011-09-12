@@ -171,47 +171,7 @@ BOOST_AUTO_TEST_CASE(assignments)
     TLazy<TCounter> forth([&dummyFlag](){ return TCounter(dummyFlag); });
     forth = CreateUsedCounter(forthFlag);
     static_cast<void>(static_cast<TCounter&>(forth));
-    BOOST_REQUIRE_EQUAL(forthFlag, 1);
+    BOOST_REQUIRE_EQUAL(forthFlag, 5);
     BOOST_REQUIRE_EQUAL(dummyFlag, 0);
-}
-
-struct TPod
-{
-    int A_;
-    double B_;
-    char C_[16];
-};
-
-struct TCopyable
-{
-    TCopyable& operator = (const TCopyable&)
-    {
-        return *this;
-    }
-};
-
-BOOST_AUTO_TEST_CASE(storage)
-{
-    TLazy<int> first([](){ return 1; });
-    BOOST_REQUIRE_LE(&first, static_cast<void*>(&static_cast<int&>(first)));
-    BOOST_REQUIRE_GT(&first + 1,
-        static_cast<void*>(&static_cast<int&>(first)));
-
-    TLazy<TPod> second([](){ return TPod(); });
-    BOOST_REQUIRE_LE(&second,
-        static_cast<void*>(&static_cast<TPod&>(second)));
-    BOOST_REQUIRE_GT(&second + 1,
-        static_cast<void*>(&static_cast<TPod&>(second)));
-
-    TLazy<TCopyable> third([](){ return TCopyable(); });
-    BOOST_REQUIRE_LE(&third,
-        static_cast<void*>(&static_cast<TCopyable&>(third)));
-    BOOST_REQUIRE_GT(&third + 1,
-        static_cast<void*>(&static_cast<TCopyable&>(third)));
-
-    int flag = 0;
-    TLazy<TCounter> forth([&flag](){ return TCounter(flag); });
-    BOOST_REQUIRE(static_cast<void*>(&static_cast<TCounter&>(forth)) < &forth
-        || static_cast<void*>(&static_cast<TCounter&>(forth)) > &forth + 1);
 }
 
