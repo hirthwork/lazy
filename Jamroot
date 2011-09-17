@@ -18,6 +18,6 @@ package.install dist
     : <install-header-subdir>reinvented-wheels
     :
     :
-    : lazy.hpp storage.hpp
+    : lazy.hpp
     ;
 
