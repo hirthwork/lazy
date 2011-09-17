@@ -17,8 +17,6 @@ To do list:
 -----------
   (*) Allow heterogeneous assignments and copying.
 
-  (*) Add noexcept to functions.
-
   (*) Cover reference returning functions with tests.
 
   (*) Implement thread-safety policies.
@@ -30,6 +28,8 @@ To do list:
     Value_ on each assignment or copy.
 
   (?) Implement "void" values support.
+
+  (?) Add noexcept to functions.
 
   (+) Replace all references passed to functions with type trait to have small
     POD types copied, not referenced.

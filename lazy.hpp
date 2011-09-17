@@ -170,21 +170,32 @@ namespace NReinventedWheels
             CopyValue(std::is_copy_assignable<TValue>(), value);
         }
 
+        // TODO: rewrite next five functions, to have less functions
         inline void MoveValue(std::true_type, TValue&& value)
+        {
+            Value_ = std::move(value);
+        }
+
+        inline void MoveValue(std::false_type, TValue&& value)
         {
             // TODO: provide strong guarantees here
             Value_.~TValue();
             ConstructValue(std::move(value));
         }
 
-        inline void MoveValue(std::false_type, TValue&& value)
+        inline void MoveAssign(std::true_type, TValue&& value)
+        {
+            MoveValue(std::is_move_assignable<TValue>(), std::move(value));
+        }
+
+        inline void MoveAssign(std::false_type, TValue&& value)
         {
             CopyValue(value);
         }
 
         inline void MoveValue(TValue&& value)
         {
-            MoveValue(std::__or_<std::is_move_constructible<TValue>,
+            MoveAssign(std::__or_<std::is_move_constructible<TValue>,
                 std::is_move_assignable<TValue>>(), std::move(value));
         }
 
@@ -253,6 +264,20 @@ namespace NReinventedWheels
             return *this;
         }
 
+        inline TLazy& operator = (TValue&& value)
+        {
+            if (Initialized_)
+            {
+                MoveValue(std::move(value));
+            }
+            else
+            {
+                ConstructValue(std::move(value));
+                Initialized_ = true;
+            }
+            return *this;
+        }
+
         inline TLazy& operator = (const TLazy& lazy)
         {
             ValidateCopyTraits();
@@ -307,13 +332,14 @@ namespace NReinventedWheels
         {
             if (Initialized_)
             {
-                if (lazy.Inititalized_)
+                if (lazy.Initialized_)
                 {
                     std::swap(Value_, lazy.Value_);
                 }
                 else
                 {
                     lazy.MoveNewValue(std::move(Value_));
+                    lazy.Initialized_ = true;
                     Calculator_ = std::move(lazy.Calculator_);
                     this->Destroy();
                 }
@@ -323,6 +349,7 @@ namespace NReinventedWheels
                 if (lazy.Initialized_)
                 {
                     MoveNewValue(std::move(lazy.Value_));
+                    Initialized_ = true;
                     lazy.Calculator_ = std::move(Calculator_);
                     lazy.Destroy();
                 }
