@@ -1,15 +1,7 @@
 import package ;
 
 project
-    : requirements <include>.
-    ;
-
-using gcc
-    :
-    :
-    : <compileflags>-std=c++0x <compileflags>-Wall <compileflags>-Wextra
-      <compileflags>-Werror <compileflags>-pedantic-errors
-      <compileflags>-fmax-errors=1
+    : requirements <include>. <cxxflags>-std=c++0x
     ;
 
 explicit test ;

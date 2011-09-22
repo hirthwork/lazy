@@ -21,5 +21,11 @@ lib boost_test_exec_monitor
     ;
 
 compile double-inclusion.cpp ;
-run main.cpp boost_unit_test_framework boost_test_exec_monitor ;
+run main.cpp boost_unit_test_framework boost_test_exec_monitor
+    :
+    :
+    : <cxxflags>-pedantic-errors <cxxflags>-Wall <cxxflags>-Wextra
+      <cxxflags>-Werror <cxxflags>-p <linkflags>-p <cxxflags>-ftest-coverage
+      <cxxflags>-fprofile-arcs <linkflags>-fprofile-arcs
+    ;
 
